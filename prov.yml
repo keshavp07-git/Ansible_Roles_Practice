@@ -1,0 +1,6 @@
+---
+- name: Provisioning Server # Decision Making
+  hosts: all # Target all hosts
+  become: yes # Use privilege escalation
+  roles:
+   - post-install # Role for post-installation tasks

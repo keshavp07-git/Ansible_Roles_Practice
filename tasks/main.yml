@@ -1,0 +1,71 @@
+#SPDX-License-Identifier: MIT-0
+---
+# tasks file for post-install
+- name: Installing NTP on CentOS # Install NTP on CentOS
+  yum: # Install NTP using yum
+    name: chrony # Chrony is the NTP client for CentOS
+    state: present # Ensure it's installed
+  when: ansible_distribution == "CentOS" # Only run on CentOS
+
+- name: Installing NTP on Ubuntu # Install NTP on Ubuntu
+  apt: # Install NTP using apt
+    name: ntp # ntp is the NTP client for Ubuntu
+    state: present # Ensure it's installed
+    update_cache: yes # Update the package cache first then install package
+  when: ansible_distribution == "Ubuntu" # Only run on Ubuntu
+
+- name: Start NTP service on CentOS # Start NTP service on CentOS
+  service: # Manage the NTP service
+    name: chronyd # Chrony service name for CentOS
+    state: started # Ensure the service is started
+    enabled: yes # Enable the service to start on boot
+  when: ansible_distribution == "CentOS" # Only run on CentOS
+
+- name: Start NTP service on Ubuntu # Start NTP service on Ubuntu
+  service: # Manage the NTP service
+    name: ntp # NTP service name for Ubuntu
+    state: started # Ensure the service is started
+    enabled: yes # Enable the service to start on boot
+  when: ansible_distribution == "Ubuntu" # Only run on Ubuntu
+
+- name: Banner File Edit # Edit the MOTD file , it is used to display a message to users when they log in
+  copy: # Use the copy module to edit the MOTD file , it creates or modifies a file
+    content: '# This is a test message for the MOTD file.' # Content to be added to the MOTD file
+    dest: /etc/motd # Destination file path
+
+- name: Create Directory # Create a directory for the NTP configuration files
+  file: # Use the file module to create a directory
+    path: "{{mydir}}" # Directory path
+    state: directory # Ensure the directory is created
+
+- name: Dump files
+  copy: # Use the copy module to copy files
+    src: myfile.txt # Source file path
+    dest: /tmp/myfile.txt # Destination file path on the remote machine
+
+  # We will use the template module to deploy the NTP configuration file
+  # The template module allows us to use Jinja2 templates to create configuration files dynamically
+  # Difference between copy and template module is that copy module copies a file from the local machine to the remote machine,
+  # while template module processes a Jinja2 template file and creates a new file on the remote machine based on the template.
+  # Variables can be used in the template file to create dynamic configuration files.
+  # 4 NTP Servers are used in the template file, 2 for each region.
+  # After assgining Variables to all hosts, we edit the template file to use the variables.
+  # Edit pool servers in the template file to use the variables defined in the variables file.
+
+- name: NTP Deployment CentOS # Deploy NTP configuration
+  template: # Use the template module to deploy the NTP configuration file
+    src: ntpconf_centos.j2 # Source template file
+    dest: /etc/ntp.conf # Destination file path
+    backup: yes # Create a backup of the file before overwriting it
+  when: ansible_distribution == "CentOS" # Only run on CentOS
+  notify: # Notify the handler to restart the service if this task changes
+    - Restart NTP service on CentOS # Notify the handler to restart the NTP service on CentOS , if the task changes
+
+- name: NTP Deployment Ubuntu # Deploy NTP configuration
+  template: # Use the template module to deploy the NTP configuration file
+    src: ntpconf_ubuntu.j2 # Source template file
+    dest: /etc/ntpsec/ntp.conf # Destination file path
+    backup: yes # Create a backup of the file before overwriting it
+  when: ansible_distribution == "Ubuntu" # Only run on CentOS
+  notify: # Notify the handler to restart the service if this task changes
+    - Restart NTP service on Ubuntu # Notify the handler to restart the NTP service on Ubuntu , if the task changes

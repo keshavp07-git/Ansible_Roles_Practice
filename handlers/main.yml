@@ -1,0 +1,17 @@
+#SPDX-License-Identifier: MIT-0
+---
+# handlers file for post-install
+# Handlers are special tasks that are only run when notified by other tasks
+- name: Restart NTP service on CentOS # Start NTP service on CentOS
+  service: # Manage the NTP service
+    name: chronyd # Chrony service name for CentOS
+    state: restarted # Ensure the service is started
+    enabled: yes # Enable the service to start on boot
+  when: ansible_distribution == "CentOS" # Only run on CentOS
+
+- name: Restart NTP service on Ubuntu # Start NTP service on Ubuntu
+  service: # Manage the NTP service
+    name: ntp # NTP service name for Ubuntu
+    state: restarted # Ensure the service is started
+    enabled: yes # Enable the service to start on boot
+  when: ansible_distribution == "Ubuntu" # Only run on Ubuntu
